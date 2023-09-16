@@ -2,12 +2,10 @@ package com.bullet.game.screens;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
-import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
@@ -15,34 +13,25 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
-import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalShadowLight;
-import com.badlogic.gdx.graphics.g3d.environment.ShadowMap;
+import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
+import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
+import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.BoxShapeBuilder;
-import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.ConeShapeBuilder;
-import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.CylinderShapeBuilder;
-import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.SphereShapeBuilder;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
-import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
-import com.badlogic.gdx.physics.bullet.collision.btConeShape;
-import com.badlogic.gdx.physics.bullet.collision.btCylinderShape;
-import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
-import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.bullet.game.entitys.Player;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.VisLabel;
 
-public class BaseScreen extends ScreenAdapter{
+public class BaseScreen extends ScreenAdapter {
     protected PerspectiveCamera camera;
     protected FirstPersonCameraController cameraController;
     protected ModelBatch modelBatch;
@@ -51,19 +40,27 @@ public class BaseScreen extends ScreenAdapter{
     protected Environment environment;
     protected DirectionalShadowLight shadowLight;
     protected Game game;
-    
-    protected final Array<Color> colors;
-    protected final Stage stage;
-    protected final VisLabel fpsLabel;
+    Player player;
+    private final Array<Color> colors;
 
-    final float GRID_MIN = -100F;
+    private final Stage stage;
+    private final VisLabel fpsLabel;
+
+    final float GRID_MIN = -100f;
     final float GRID_MAX = 100f;
-    final float GRID_STEP = 100f;
+    final float GRID_STEP = 10f;
 
-    public BaseScreen(Game game){
+    public BaseScreen(Game game) {
         VisUI.load();
-        
+
         this.game = game;
+        
+
+        // Essas configurações devem ser feitas pois o modelo do jogador contem muitos bones
+        DefaultShader.Config shaderConfig = new DefaultShader.Config();
+        DepthShader.Config depthShaderConfig = new DepthShader.Config();
+        depthShaderConfig.numBones = 64;
+        shaderConfig.numBones = 64;
 
         camera = new PerspectiveCamera(60f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 1f;
@@ -72,7 +69,8 @@ public class BaseScreen extends ScreenAdapter{
 
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
-        environment.add((shadowLight = new DirectionalShadowLight(2048, 2048, 30f, 30f, 1f, 100f)).set(0.8f, 0.8f, 0.8f, -.4f, -.4f, -.4f));
+        environment.add((shadowLight = new DirectionalShadowLight(2048, 2048, 30f, 30f, 1f, 100f)).set(0.8f, 0.8f, 0.8f,
+                -.4f, -.4f, -.4f));
         environment.shadowMap = shadowLight;
 
         stage = new Stage(new FitViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
@@ -81,9 +79,10 @@ public class BaseScreen extends ScreenAdapter{
         fpsLabel.setPosition(10, 10);
         stage.addActor(fpsLabel);
 
-        modelBatch = new ModelBatch();
-        shadowBatch = new ModelBatch(new DepthShaderProvider());
-
+        // Aumente o valor de numBones para o desejado
+        modelBatch = new ModelBatch(new DefaultShaderProvider(shaderConfig));
+        shadowBatch = new ModelBatch(new DepthShaderProvider(depthShaderConfig));
+        
         renderInstances = new Array<>();
 
         cameraController = new FirstPersonCameraController(camera);
@@ -98,14 +97,16 @@ public class BaseScreen extends ScreenAdapter{
         colors.add(Color.BROWN);
         colors.add(Color.FIREBRICK);
 
+        player = new Player();
+        renderInstances.add(player.getModelInstance());
         createAxes();
     }
 
     @Override
-
-    public void render(float delta){
+    public void render(float delta) {
         cameraController.update(delta);
-        
+
+        player.update();
         ScreenUtils.clear(Color.BLACK, true);
 
         shadowLight.begin(Vector3.Zero, camera.direction);
@@ -127,13 +128,15 @@ public class BaseScreen extends ScreenAdapter{
     private void createAxes() {
         ModelBuilder modelBuilder = new ModelBuilder();
         modelBuilder.begin();
-        MeshPartBuilder builder = modelBuilder.part("grid", GL20.GL_LINES, VertexAttributes.Usage.Position | VertexAttributes.Usage.ColorUnpacked, new Material());
+        MeshPartBuilder builder = modelBuilder.part("grid", GL20.GL_LINES,
+                VertexAttributes.Usage.Position | VertexAttributes.Usage.ColorUnpacked, new Material());
         builder.setColor(Color.LIGHT_GRAY);
         for (float t = GRID_MIN; t <= GRID_MAX; t += GRID_STEP) {
             builder.line(t, 0, GRID_MIN, t, 0, GRID_MAX);
             builder.line(GRID_MIN, 0, t, GRID_MAX, 0, t);
         }
-        builder = modelBuilder.part("axes", GL20.GL_LINES, VertexAttributes.Usage.Position | VertexAttributes.Usage.ColorUnpacked, new Material());
+        builder = modelBuilder.part("axes", GL20.GL_LINES,
+                VertexAttributes.Usage.Position | VertexAttributes.Usage.ColorUnpacked, new Material());
         builder.setColor(Color.RED);
         builder.line(0, .1f, 0, 100, 0, 0);
         builder.setColor(Color.GREEN);
@@ -146,7 +149,7 @@ public class BaseScreen extends ScreenAdapter{
         renderInstances.add(axesInstance);
     }
 
-    protected Color getRandomColor(){
-        return colors.get(MathUtils.random(0, colors.size-1));
+    protected Color getRandomColor() {
+        return colors.get(MathUtils.random(0, colors.size - 1));
     }
 }
