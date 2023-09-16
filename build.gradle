@@ -27,6 +27,7 @@ allprojects {
         aiVersion = '1.8.2'
         gdxControllersVersion = '2.2.1'
         visuiVersion = '1.5.0'
+        gltfVersion = '-SNAPSHOT'
     }
 
     repositories {
@@ -37,6 +38,7 @@ allprojects {
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
         maven { url "https://oss.sonatype.org/content/repositories/releases/" }
         maven { url "https://jitpack.io" }
+        maven { url 'https://jitpack.io' }
     }
 }
 
@@ -67,6 +69,7 @@ project(":core") {
         api "com.badlogicgames.gdx:gdx-ai:$aiVersion"
         api "com.badlogicgames.ashley:ashley:$ashleyVersion"
         api "com.kotcrab.vis:vis-ui:$visuiVersion"
+        api "com.github.mgsx-dev.gdx-gltf:gltf:$gltfVersion"
         
     }
 }
