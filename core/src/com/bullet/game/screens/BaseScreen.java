@@ -2,10 +2,12 @@ package com.bullet.game.screens;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
+import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
@@ -21,12 +23,17 @@ import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.BoxShapeBuilder;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
+import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
+import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody.btRigidBodyConstructionInfo;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.bullet.game.BulletPhysicsSystem;
 import com.bullet.game.entitys.Player;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.VisLabel;
@@ -40,7 +47,8 @@ public class BaseScreen extends ScreenAdapter {
     protected Environment environment;
     protected DirectionalShadowLight shadowLight;
     protected Game game;
-    Player player;
+    protected BulletPhysicsSystem bulletPhysicsSystem;
+    protected Player player;
     private final Array<Color> colors;
 
     private final Stage stage;
@@ -54,9 +62,10 @@ public class BaseScreen extends ScreenAdapter {
         VisUI.load();
 
         this.game = game;
-        
+        bulletPhysicsSystem = new BulletPhysicsSystem();
 
-        // Essas configurações devem ser feitas pois o modelo do jogador contem muitos bones
+        // Essas configurações devem ser feitas pois o modelo do jogador contem muitos
+        // bones
         // Aumente o valor de numBones para o desejado
         DefaultShader.Config shaderConfig = new DefaultShader.Config();
         DepthShader.Config depthShaderConfig = new DepthShader.Config();
@@ -80,10 +89,9 @@ public class BaseScreen extends ScreenAdapter {
         fpsLabel.setPosition(10, 10);
         stage.addActor(fpsLabel);
 
-        
         modelBatch = new ModelBatch(new DefaultShaderProvider(shaderConfig));
         shadowBatch = new ModelBatch(new DepthShaderProvider(depthShaderConfig));
-        
+
         renderInstances = new Array<>();
 
         cameraController = new FirstPersonCameraController(camera);
@@ -105,6 +113,10 @@ public class BaseScreen extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
+
+        bulletPhysicsSystem.update(delta);
+
+        bulletPhysicsSystem.update(delta);
         cameraController.update(delta);
 
         player.update();
@@ -124,6 +136,27 @@ public class BaseScreen extends ScreenAdapter {
         stage.draw();
 
         fpsLabel.setText("FPS: " + Gdx.graphics.getFramesPerSecond());
+    }
+
+    protected void createFloor(float width, float height, float depth) {
+        ModelBuilder modelBuilder = new ModelBuilder();
+        modelBuilder.begin();
+        MeshPartBuilder meshBuilder = modelBuilder.part("floor", GL20.GL_TRIANGLES, VertexAttribute.Position().usage | VertexAttribute.Normal().usage | VertexAttribute.TexCoords(0).usage,new Material());
+
+        BoxShapeBuilder.build(meshBuilder, width, height, depth);
+        btBoxShape btBoxShape = new btBoxShape(new Vector3(width / 2f, height / 2f, depth / 2f));
+        Model floor = modelBuilder.end();
+
+        ModelInstance floorInstance = new ModelInstance(floor);
+        floorInstance.transform.trn(0, -0.5f, 0f);
+
+        btRigidBody.btRigidBodyConstructionInfo info = new btRigidBodyConstructionInfo(depth, null, btBoxShape, Vector3.Zero);
+        btRigidBody body = new btRigidBody(info);
+
+        body.setWorldTransform(floorInstance.transform);
+        renderInstances.add(floorInstance);
+        
+        bulletPhysicsSystem.addBody(body);
     }
 
     private void createAxes() {
