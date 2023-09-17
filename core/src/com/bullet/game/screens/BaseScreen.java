@@ -57,6 +57,7 @@ public class BaseScreen extends ScreenAdapter {
         
 
         // Essas configurações devem ser feitas pois o modelo do jogador contem muitos bones
+        // Aumente o valor de numBones para o desejado
         DefaultShader.Config shaderConfig = new DefaultShader.Config();
         DepthShader.Config depthShaderConfig = new DepthShader.Config();
         depthShaderConfig.numBones = 64;
@@ -79,7 +80,7 @@ public class BaseScreen extends ScreenAdapter {
         fpsLabel.setPosition(10, 10);
         stage.addActor(fpsLabel);
 
-        // Aumente o valor de numBones para o desejado
+        
         modelBatch = new ModelBatch(new DefaultShaderProvider(shaderConfig));
         shadowBatch = new ModelBatch(new DepthShaderProvider(depthShaderConfig));
         
