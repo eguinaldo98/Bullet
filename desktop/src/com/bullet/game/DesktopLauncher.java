@@ -8,7 +8,7 @@ import com.bullet.game.BulletGame;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
-		config.setForegroundFPS(120);
+		config.setForegroundFPS(60);
 		config.setBackBufferConfig(8, 8, 8, 8 ,16, 0, 4);
 		config.setWindowedMode(1280, 720);
 		config.setTitle("Bullet");

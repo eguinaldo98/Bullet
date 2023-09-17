@@ -113,14 +113,12 @@ public class BaseScreen extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
-
-        bulletPhysicsSystem.update(delta);
+        ScreenUtils.clear(Color.BLACK, true);
 
         bulletPhysicsSystem.update(delta);
         cameraController.update(delta);
 
         player.update();
-        ScreenUtils.clear(Color.BLACK, true);
 
         shadowLight.begin(Vector3.Zero, camera.direction);
         shadowBatch.begin(shadowLight.getCamera());
@@ -131,7 +129,9 @@ public class BaseScreen extends ScreenAdapter {
         modelBatch.begin(camera);
         modelBatch.render(renderInstances, environment);
         modelBatch.end();
+        
 
+        bulletPhysicsSystem.render(camera);
         stage.act();
         stage.draw();
 
@@ -150,12 +150,11 @@ public class BaseScreen extends ScreenAdapter {
         ModelInstance floorInstance = new ModelInstance(floor);
         floorInstance.transform.trn(0, -0.5f, 0f);
 
-        btRigidBody.btRigidBodyConstructionInfo info = new btRigidBodyConstructionInfo(depth, null, btBoxShape, Vector3.Zero);
+        btRigidBody.btRigidBodyConstructionInfo info = new btRigidBody.btRigidBodyConstructionInfo(0, null, btBoxShape, Vector3.Zero);
         btRigidBody body = new btRigidBody(info);
 
         body.setWorldTransform(floorInstance.transform);
         renderInstances.add(floorInstance);
-        
         bulletPhysicsSystem.addBody(body);
     }
 
