@@ -88,6 +88,7 @@ public class RigidBodyPhysics extends BaseScreen{
 
 
                 renderInstances.add(box);
+                
                 bulletPhysicsSystem.addBody(body);
             }
         }

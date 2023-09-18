@@ -107,6 +107,7 @@ public class BaseScreen extends ScreenAdapter {
         colors.add(Color.FIREBRICK);
 
         player = new Player();
+        player.addBody(bulletPhysicsSystem);
         renderInstances.add(player.getModelInstance());
         createAxes();
     }
