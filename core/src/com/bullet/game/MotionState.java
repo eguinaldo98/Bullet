@@ -6,7 +6,7 @@ import com.badlogic.gdx.physics.bullet.linearmath.btMotionState;
 
 public class MotionState extends btMotionState{
     public Matrix4 transform;
-
+    
     public MotionState(Matrix4 transform){
         this.transform = transform;
     }

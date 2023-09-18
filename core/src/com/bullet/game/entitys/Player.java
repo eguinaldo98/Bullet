@@ -9,6 +9,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
+import com.badlogic.gdx.physics.bullet.collision.btCapsuleShape;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
 import com.badlogic.gdx.physics.bullet.collision.btCylinderShape;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
@@ -25,35 +26,29 @@ public class Player implements Disposable, AnimationController.AnimationListener
     private SceneAsset sceneAsset;
     private Scene scene;
     private ModelInstance player;
-    private Vector3 playerPosition;
-    private BoundingBox boundingBox;
     private btCollisionShape shape;
     private float mass = 1f;
     private Vector3 localInertia;
     private btRigidBody.btRigidBodyConstructionInfo info;
     private btRigidBody body;
     private MotionState motionState;
-    private Matrix4 playerTransform;
 
     public Player() {
         sceneAsset = new GLBLoader().load(Gdx.files.internal("Druid.glb"));
         scene = new Scene(sceneAsset.scene);
         player = scene.modelInstance;
         
-        shape = new btCylinderShape(new Vector3(0.5f, 0.5f, 0.5f));
+        shape = new btCapsuleShape(0.5f, 1.4f);
+        player.transform.setTranslation(1, MathUtils.random(10, 20), 0);
+        player.transform.rotate(new Quaternion(Vector3.Z, 0f));
 
-        playerTransform = new Matrix4();
-        playerTransform.setTranslation(1, MathUtils.random(10, 20), 0);
-        playerTransform.rotate(new Quaternion(Vector3.Z, MathUtils.random(0f, 270f)));
-        player.transform = playerTransform;
         mass = 1f;
         localInertia = new Vector3();
         shape.calculateLocalInertia(mass, localInertia);
-
         info = new btRigidBodyConstructionInfo(mass, null, shape, localInertia);
         body = new btRigidBody(info);
 
-        motionState = new MotionState(playerTransform);
+        motionState = new MotionState(player.transform);
         body.setMotionState(motionState);
         
     }

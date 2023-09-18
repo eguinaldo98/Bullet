@@ -132,7 +132,7 @@ public class BaseScreen extends ScreenAdapter {
         modelBatch.end();
         
 
-        bulletPhysicsSystem.render(camera);
+        // bulletPhysicsSystem.render(camera);
         stage.act();
         stage.draw();
 
